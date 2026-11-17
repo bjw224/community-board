@@ -2,7 +2,7 @@ name: collect
 
 on:
   schedule:
-    - cron: '*/10 * * * *'   # 10분마다 (GitHub 사정으로 몇 분~수십 분 늦어질 수 있음)
+    - cron: '*/5 * * * *'    # 5분마다 (GitHub 최소 주기. 사정에 따라 몇 분~수십 분 늦어질 수 있음)
   workflow_dispatch:          # Actions 탭에서 수동 실행
   push:
     branches: [main]

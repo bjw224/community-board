@@ -62,7 +62,7 @@ function loadPrev() {
   for (let i = 0; Object.values(bySite).some((l) => l[i]); i++)
     for (const l of Object.values(bySite)) if (l[i]) order.push(l[i]);
 
-  const slot = Math.floor(Date.now() / 600e3);   // 10분 단위 실행 순번
+  const slot = Math.floor(Date.now() / 300e3);   // 5분 단위 실행 순번
   const lastHit = {};
   for (const b of order) {
     let fresh = [];

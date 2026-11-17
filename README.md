@@ -1,10 +1,10 @@
 # 커뮤니티 모아보기
 
 클리앙·뽐뿌·다모앙의 지정 게시판 글 목록을 한 화면에서 보는 개인용 페이지.
-서버 없이 **GitHub Actions(10분마다 수집) + GitHub Pages(화면)** 로 무료 운영.
+서버 없이 **GitHub Actions(5분마다 수집) + GitHub Pages(화면)** 로 무료 운영.
 
 ```
-GitHub Actions (10분 주기)
+GitHub Actions (5분 주기)
   └ collect.js : 게시판 목록/RSS 가져오기 → 이전 데이터와 병합 → data.json
   └ gh-pages 브랜치에 index.html + data.json 배포 (매번 커밋 1개로 덮어씀)
 GitHub Pages
@@ -56,6 +56,6 @@ npx serve web            # http://localhost:3000
 - 다모앙 RSS는 작성자 정보가 없어 작성자 칸이 비어 있음
 - Public 저장소 스케줄은 **60일간 저장소 활동이 없으면 GitHub가 자동 중지**할 수 있음 → 경고 메일이 오면 Actions 탭에서 다시 Enable
 - 사이트 HTML 구조가 바뀌면 클리앙 파서(`parsers.js`) 수정 필요
-- 다모앙 RSS는 요청 수 제한이 있어 12초 간격으로 요청하고, 글이 뜸한 게시판(사용기·강좌/팁)은 20분마다 번갈아 수집
+- 다모앙 RSS는 요청 수 제한이 있어 12초 간격으로 요청하고, 글이 뜸한 게시판(사용기·강좌/팁)은 10분마다 번갈아 수집
 - 뽐뿌 HOT게시글, 다모앙 굴러간당·애플모앙은 GitHub 서버 접근 시 403이라 수집 대신 바로가기 링크로 표시 (`linkOnly: true`)
 - 개인 열람용. 제목·링크만 가져오며 본문은 수집하지 않음

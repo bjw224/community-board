@@ -18,7 +18,7 @@ module.exports = [
   { id: 'ppomppu-money',   site: '뽐뿌', name: '재테크포럼', type: 'rss', url: 'https://www.ppomppu.co.kr/rss.php?id=money' },
   { id: 'ppomppu-phone',   site: '뽐뿌', name: '휴대폰포럼', type: 'rss', url: 'https://www.ppomppu.co.kr/rss.php?id=phone' },
 
-  // 다모앙 (RSS 요청 수 제한이 있어 글이 뜸한 게시판은 20분마다 번갈아 수집)
+  // 다모앙 (RSS 요청 수 제한이 있어 글이 뜸한 게시판은 10분마다 번갈아 수집)
   // 굴러간당·애플모앙은 GitHub 서버 접근 시 403이라 링크만 표시
   { id: 'damoang-free',    site: '다모앙', name: '자유게시판', type: 'rss', url: 'https://damoang.net/bbs/rss.php?bo_table=free' },
   { id: 'damoang-new',     site: '다모앙', name: '새소식',     type: 'rss', url: 'https://damoang.net/bbs/rss.php?bo_table=new' },
