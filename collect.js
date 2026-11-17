@@ -9,6 +9,7 @@ const OUT = process.argv[3] || 'web/data.json';
 const KEEP_PER_BOARD = 50;          // 게시판당 보관 개수 (최신순)
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
 
+const SITE_GAP = { '다모앙': 12000 };   // 다모앙은 RSS 요청 제한이 있어 12초 간격
 const parsers = { clien: parseClien, rss: parseRss, ppomppu_hot: parsePpomppuHot };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -27,10 +28,10 @@ async function fetchOnce(url) {
 
 async function fetchText(url) {
   let res;
-  for (let i = 0; i < 3; i++) {           // 403/429/5xx는 잠시 쉬었다 재시도
+  for (let i = 0; i < 2; i++) {           // 429/5xx만 한 번 쉬었다 재시도 (403 차단은 재시도 안 함)
     res = await fetchOnce(url);
-    if (res.ok || ![403, 429, 500, 502, 503, 504].includes(res.status)) break;
-    await sleep(4000 * (i + 1));
+    if (res.ok || ![429, 500, 502, 503, 504].includes(res.status)) break;
+    await sleep(15000);
   }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buf = await res.arrayBuffer();
@@ -61,8 +62,22 @@ function loadPrev() {
   for (let i = 0; Object.values(bySite).some((l) => l[i]); i++)
     for (const l of Object.values(bySite)) if (l[i]) order.push(l[i]);
 
+  const slot = Math.floor(Date.now() / 600e3);   // 10분 단위 실행 순번
+  const lastHit = {};
   for (const b of order) {
     let fresh = [];
+    if (b.every && slot % b.every !== (b.offset || 0)) {
+      // 이번 순번이 아니면 이전 데이터 유지
+      status[b.id] = prev.status?.[b.id] || { ok: true, count: 0, at: null };
+      const kept = prevByBoard[b.id] || [];
+      posts.push(...kept);
+      console.log(`${b.site} ${b.name}: 이번 회차 건너뜀, 보관 ${kept.length}건`);
+      continue;
+    }
+    const gap = SITE_GAP[b.site] || 1500;           // 같은 사이트 연속 요청 간격
+    const wait = (lastHit[b.site] || 0) + gap - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastHit[b.site] = Date.now();
     try {
       const body = await fetchText(b.url);
       fresh = parsers[b.type](body, b).map((p) => ({ ...p, board: b.id }));
@@ -83,7 +98,6 @@ function loadPrev() {
       .slice(0, KEEP_PER_BOARD);
     posts.push(...merged);
     console.log(`${b.site} ${b.name}: 새로 ${fresh.length}건, 보관 ${merged.length}건`);
-    await sleep(1500); // 사이트 부담 줄이기
   }
 
   const data = {
