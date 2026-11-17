@@ -1,0 +1,17 @@
+{
+  "name": "community-board",
+  "version": "1.0.0",
+  "description": "클리앙·뽐뿌·다모앙 게시판 모아보기",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "collect": "node collect.js",
+    "test": "node test/test.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  },
+  "private": true
+}

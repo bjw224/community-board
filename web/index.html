@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>커뮤니티 모아보기</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --text: #1d2025; --sub: #6b7280; --line: #e5e7eb;
+    --visited: #9aa0a8; --hover: #f1f5f9; --accent: #2563eb;
+    --clien: #3b6fd6; --ppomppu: #e0742b; --damoang: #1f9d6b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111317; --panel: #1a1d22; --text: #e6e8eb; --sub: #8b929c; --line: #2a2e35;
+            --visited: #6b7280; --hover: #22262d; --accent: #6b9cff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line);
+           display: flex; gap: 10px; align-items: center; padding: 10px 16px; }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  #updated { color: var(--sub); font-size: 12px; white-space: nowrap; }
+  #q { flex: 1; min-width: 80px; max-width: 360px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px;
+       background: var(--bg); color: var(--text); font-size: 14px; }
+  button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
+           color: var(--text); cursor: pointer; font-size: 13px; white-space: nowrap; }
+  button:hover { background: var(--hover); }
+  .wrap { display: flex; max-width: 1200px; margin: 0 auto; gap: 16px; padding: 16px; align-items: flex-start; }
+  aside { width: 220px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+          padding: 10px 12px; position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow: auto; }
+  .site { margin-bottom: 10px; }
+  .site-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin: 4px 0; }
+  .site-head small { font-weight: 400; color: var(--accent); cursor: pointer; }
+  aside label { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; }
+  aside label .cnt { margin-left: auto; color: var(--sub); font-size: 12px; }
+  aside label .warn { color: #d97706; cursor: help; }
+  main { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .row { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  .row:hover { background: var(--hover); }
+  .tag { flex-shrink: 0; width: 128px; font-size: 12px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag b { font-weight: 600; }
+  .s-클리앙 b { color: var(--clien); } .s-뽐뿌 b { color: var(--ppomppu); } .s-다모앙 b { color: var(--damoang); }
+  .title { flex: 1; min-width: 0; color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title:visited { color: var(--visited); }
+  .title .cm { color: var(--accent); font-size: 12px; margin-left: 4px; }
+  .new::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ef4444; margin-right: 6px; vertical-align: middle; }
+  .meta { flex-shrink: 0; color: var(--sub); font-size: 12px; white-space: nowrap; }
+  .meta .au { display: inline-block; max-width: 90px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; margin-right: 8px; }
+  .empty { padding: 40px; text-align: center; color: var(--sub); }
+  #more { display: block; width: 100%; border: 0; border-radius: 0; padding: 12px; }
+  #toggle { display: none; }
+  @media (max-width: 760px) {
+    #toggle { display: inline-block; }
+    .wrap { display: block; padding: 8px; }
+    aside { display: none; width: auto; position: static; max-height: none; margin-bottom: 8px; }
+    aside.open { display: block; }
+    .row { flex-wrap: wrap; gap: 2px 8px; padding: 8px 10px; }
+    .tag { width: auto; order: 1; }
+    .meta { order: 2; margin-left: auto; }
+    .title { order: 3; flex-basis: 100%; white-space: normal; }
+    #updated { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>커뮤니티 모아보기</h1>
+  <button id="toggle">게시판</button>
+  <input id="q" type="search" placeholder="제목 검색">
+  <span id="updated"></span>
+  <button id="reload" title="새 데이터 불러오기">새로고침</button>
+</header>
+<div class="wrap">
+  <aside id="side"></aside>
+  <main><div id="list"></div><button id="more" hidden>더 보기</button></main>
+</div>
+<script>
+(() => {
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let data = { boards: [], posts: [], status: {} };
+  let selected = new Set(store.get('selected', null) || []);
+  let firstRun = !store.get('selected', null);
+  const lastVisit = store.get('lastVisit', 0);
+  let limit = 150;
+
+  function ago(iso) {
+    if (!iso) return '';
+    const s = (Date.now() - new Date(iso)) / 1000;
+    if (s < 60) return '방금';
+    if (s < 3600) return Math.floor(s / 60) + '분 전';
+    if (s < 86400) return Math.floor(s / 3600) + '시간 전';
+    const d = new Date(iso);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  }
+
+  function renderSide() {
+    const counts = {};
+    for (const p of data.posts) counts[p.board] = (counts[p.board] || 0) + 1;
+    const sites = [...new Set(data.boards.map((b) => b.site))];
+    $('#side').innerHTML = sites.map((site) => {
+      const bs = data.boards.filter((b) => b.site === site);
+      return `<div class="site"><div class="site-head">${esc(site)} <small data-site="${esc(site)}">전체</small></div>` +
+        bs.map((b) => {
+          const st = data.status[b.id];
+          const warn = st && !st.ok ? `<span class="warn" title="수집 실패: ${esc(st.error)}">⚠</span>` : '';
+          return `<label><input type="checkbox" value="${b.id}" ${selected.has(b.id) ? 'checked' : ''}>${esc(b.name)} ${warn}<span class="cnt">${counts[b.id] || 0}</span></label>`;
+        }).join('') + '</div>';
+    }).join('');
+  }
+
+  function renderList() {
+    const q = $('#q').value.trim().toLowerCase();
+    const bmap = Object.fromEntries(data.boards.map((b) => [b.id, b]));
+    const t = (p) => new Date(p.date || p.firstSeen).getTime();
+    const rows = data.posts
+      .filter((p) => selected.has(p.board) && (!q || p.title.toLowerCase().includes(q)))
+      .sort((a, b) => t(b) - t(a));
+    if (!rows.length) {
+      $('#list').innerHTML = `<div class="empty">${selected.size ? '표시할 글이 없습니다.' : '왼쪽에서 게시판을 선택하세요.'}</div>`;
+      $('#more').hidden = true;
+      return;
+    }
+    $('#list').innerHTML = rows.slice(0, limit).map((p) => {
+      const b = bmap[p.board] || {};
+      const isNew = lastVisit && new Date(p.firstSeen || p.date).getTime() > lastVisit;
+      const sub = p.sub ? ` · ${esc(p.sub)}` : '';
+      return `<div class="row">
+        <span class="tag s-${esc(b.site)}"><b>${esc(b.site)}</b> ${esc(b.name)}${sub}</span>
+        <a class="title${isNew ? ' new' : ''}" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title)}${p.comments ? `<span class="cm">[${p.comments}]</span>` : ''}</a>
+        <span class="meta">${p.author ? `<span class="au">${esc(p.author)}</span>` : ''}${ago(p.date || p.firstSeen)}</span>
+      </div>`;
+    }).join('');
+    $('#more').hidden = rows.length <= limit;
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+      data = await res.json();
+    } catch (e) {
+      $('#list').innerHTML = '<div class="empty">data.json을 불러오지 못했습니다. 수집이 한 번 이상 실행됐는지 확인하세요.</div>';
+      return;
+    }
+    if (firstRun) { selected = new Set(data.boards.map((b) => b.id)); firstRun = false; store.set('selected', [...selected]); }
+    $('#updated').textContent = '갱신 ' + ago(data.updatedAt);
+    $('#updated').title = new Date(data.updatedAt).toLocaleString('ko-KR');
+    renderSide();
+    renderList();
+  }
+
+  $('#side').addEventListener('change', (e) => {
+    if (e.target.type !== 'checkbox') return;
+    e.target.checked ? selected.add(e.target.value) : selected.delete(e.target.value);
+    store.set('selected', [...selected]);
+    limit = 150; renderList();
+  });
+  $('#side').addEventListener('click', (e) => {
+    const site = e.target.dataset?.site;
+    if (!site) return;
+    const ids = data.boards.filter((b) => b.site === site).map((b) => b.id);
+    const allOn = ids.every((id) => selected.has(id));
+    ids.forEach((id) => (allOn ? selected.delete(id) : selected.add(id)));
+    store.set('selected', [...selected]);
+    renderSide(); renderList();
+  });
+  $('#q').addEventListener('input', () => { limit = 150; renderList(); });
+  $('#more').addEventListener('click', () => { limit += 150; renderList(); });
+  $('#reload').addEventListener('click', load);
+  $('#toggle').addEventListener('click', () => $('#side').classList.toggle('open'));
+  addEventListener('beforeunload', () => store.set('lastVisit', Date.now()));
+  setInterval(load, 3 * 60 * 1000);
+  setInterval(() => data.updatedAt && ($('#updated').textContent = '갱신 ' + ago(data.updatedAt)), 30 * 1000);
+  load();
+})();
+</script>
+</body>
+</html>

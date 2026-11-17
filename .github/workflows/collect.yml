@@ -1,0 +1,51 @@
+name: collect
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # 10분마다 (GitHub 사정으로 몇 분~수십 분 늦어질 수 있음)
+  workflow_dispatch:          # Actions 탭에서 수동 실행
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # 이전 수집 결과를 gh-pages 브랜치에서 가져와 이어붙임
+      - name: Load previous data
+        run: |
+          git fetch origin gh-pages --depth=1 || true
+          git show origin/gh-pages:data.json > prev.json 2>/dev/null || echo '{}' > prev.json
+
+      - name: Collect
+        run: |
+          mkdir -p dist
+          cp web/index.html dist/
+          node collect.js prev.json dist/data.json
+
+      # gh-pages 브랜치를 매번 커밋 1개로 덮어써서 저장소가 커지지 않게 함
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
+          commit_message: update data
