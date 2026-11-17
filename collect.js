@@ -6,18 +6,32 @@ const { parseClien, parseRss, parsePpomppuHot } = require('./parsers');
 
 const PREV = process.argv[2] || 'web/data.json';
 const OUT = process.argv[3] || 'web/data.json';
-const KEEP_PER_BOARD = 60;          // 게시판당 보관 개수
-const KEEP_DAYS = 4;                // 이보다 오래된 글은 삭제
+const KEEP_PER_BOARD = 50;          // 게시판당 보관 개수 (최신순)
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
 
 const parsers = { clien: parseClien, rss: parseRss, ppomppu_hot: parsePpomppuHot };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function fetchText(url) {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9' },
+async function fetchOnce(url) {
+  const origin = new URL(url).origin;
+  return fetch(url, {
+    headers: {
+      'User-Agent': UA,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      'Referer': origin + '/',
+    },
     signal: AbortSignal.timeout(20000),
   });
+}
+
+async function fetchText(url) {
+  let res;
+  for (let i = 0; i < 3; i++) {           // 403/429/5xx는 잠시 쉬었다 재시도
+    res = await fetchOnce(url);
+    if (res.ok || ![403, 429, 500, 502, 503, 504].includes(res.status)) break;
+    await sleep(4000 * (i + 1));
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buf = await res.arrayBuffer();
   const ct = res.headers.get('content-type') || '';
@@ -40,9 +54,14 @@ function loadPrev() {
 
   const posts = [];
   const status = {};
-  const cutoff = Date.now() - KEEP_DAYS * 86400e3;
+  // 같은 사이트에 연달아 요청하지 않도록 사이트를 번갈아 가며 수집
+  const bySite = {};
+  for (const b of boards) (bySite[b.site] ||= []).push(b);
+  const order = [];
+  for (let i = 0; Object.values(bySite).some((l) => l[i]); i++)
+    for (const l of Object.values(bySite)) if (l[i]) order.push(l[i]);
 
-  for (const b of boards) {
+  for (const b of order) {
     let fresh = [];
     try {
       const body = await fetchText(b.url);
@@ -60,12 +79,11 @@ function loadPrev() {
     for (const p of prevByBoard[b.id] || []) map.set(p.url, p);
     for (const p of fresh) map.set(p.url, { ...map.get(p.url), ...p, firstSeen: map.get(p.url)?.firstSeen || new Date().toISOString() });
     const merged = [...map.values()]
-      .filter((p) => new Date(p.date || p.firstSeen).getTime() > cutoff)
       .sort((x, y) => new Date(y.date || y.firstSeen) - new Date(x.date || x.firstSeen))
       .slice(0, KEEP_PER_BOARD);
     posts.push(...merged);
     console.log(`${b.site} ${b.name}: 새로 ${fresh.length}건, 보관 ${merged.length}건`);
-    await sleep(800); // 사이트 부담 줄이기
+    await sleep(1500); // 사이트 부담 줄이기
   }
 
   const data = {
