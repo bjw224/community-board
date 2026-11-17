@@ -11,6 +11,11 @@ GitHub Pages
   └ index.html : data.json 읽어서 게시판 선택·검색·시간순 목록 표시
 ```
 
+## 구성
+
+- **웹사이트** (`web/`, `collect.js`): 어디서나 접속, 5분 주기 갱신 → https://bjw224.github.io/community-board/
+- **크롬 확장프로그램** (`extension/`): PC 크롬에서 30초 실시간 갱신 + 본문·댓글 바로 보기 → [설치 방법](extension/README.md)
+
 ## 설정 (최초 1회, 10분 정도)
 
 1. GitHub에서 새 저장소 생성 (예: `community-board`, **Public**)
