@@ -57,7 +57,7 @@ function loadPrev() {
   const status = {};
   // 같은 사이트에 연달아 요청하지 않도록 사이트를 번갈아 가며 수집
   const bySite = {};
-  for (const b of boards) (bySite[b.site] ||= []).push(b);
+  for (const b of boards.filter((b) => !b.linkOnly)) (bySite[b.site] ||= []).push(b);
   const order = [];
   for (let i = 0; Object.values(bySite).some((l) => l[i]); i++)
     for (const l of Object.values(bySite)) if (l[i]) order.push(l[i]);
@@ -102,7 +102,7 @@ function loadPrev() {
 
   const data = {
     updatedAt: new Date().toISOString(),
-    boards: boards.map(({ id, site, name, url }) => ({ id, site, name, url: url.replace('/rss.php?id=', '/zboard/zboard.php?id=').replace('/bbs/rss.php?bo_table=', '/') })),
+    boards: boards.map(({ id, site, name, url, linkOnly }) => ({ id, site, name, linkOnly: !!linkOnly, url: url.replace('/rss.php?id=', '/zboard/zboard.php?id=').replace('/bbs/rss.php?bo_table=', '/') })),
     status,
     posts,
   };

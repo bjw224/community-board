@@ -35,6 +35,8 @@
   .site-head small { font-weight: 400; color: var(--accent); cursor: pointer; }
   aside label { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; }
   aside label .cnt { margin-left: auto; color: var(--sub); font-size: 12px; }
+  aside a.ext { display: block; padding: 2px 0 2px 22px; color: var(--sub); text-decoration: none; }
+  aside a.ext:hover { color: var(--accent); }
   aside label .warn { color: #d97706; cursor: help; }
   main { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .row { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
@@ -109,6 +111,7 @@
       const bs = data.boards.filter((b) => b.site === site);
       return `<div class="site"><div class="site-head">${esc(site)} <small data-site="${esc(site)}">전체</small></div>` +
         bs.map((b) => {
+          if (b.linkOnly) return `<a class="ext" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" title="자동 수집이 막힌 게시판이라 사이트로 바로 이동합니다">${esc(b.name)} ↗</a>`;
           const st = data.status[b.id];
           const warn = st && !st.ok ? `<span class="warn" title="수집 실패: ${esc(st.error)}">⚠</span>` : '';
           return `<label><input type="checkbox" value="${b.id}" ${selected.has(b.id) ? 'checked' : ''}>${esc(b.name)} ${warn}<span class="cnt">${counts[b.id] || 0}</span></label>`;
@@ -149,7 +152,7 @@
       $('#list').innerHTML = '<div class="empty">data.json을 불러오지 못했습니다. 수집이 한 번 이상 실행됐는지 확인하세요.</div>';
       return;
     }
-    if (firstRun) { selected = new Set(data.boards.map((b) => b.id)); firstRun = false; store.set('selected', [...selected]); }
+    if (firstRun) { selected = new Set(data.boards.filter((b) => !b.linkOnly).map((b) => b.id)); firstRun = false; store.set('selected', [...selected]); }
     $('#updated').textContent = '갱신 ' + ago(data.updatedAt);
     $('#updated').title = new Date(data.updatedAt).toLocaleString('ko-KR');
     renderSide();
@@ -165,7 +168,7 @@
   $('#side').addEventListener('click', (e) => {
     const site = e.target.dataset?.site;
     if (!site) return;
-    const ids = data.boards.filter((b) => b.site === site).map((b) => b.id);
+    const ids = data.boards.filter((b) => b.site === site && !b.linkOnly).map((b) => b.id);
     const allOn = ids.every((id) => selected.has(id));
     ids.forEach((id) => (allOn ? selected.delete(id) : selected.add(id)));
     store.set('selected', [...selected]);
