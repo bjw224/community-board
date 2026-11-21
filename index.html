@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>커뮤니티 모아보기</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --text: #1d2025; --sub: #6b7280; --line: #e5e7eb;
+    --visited: #9aa0a8; --hover: #f1f5f9; --accent: #2563eb; --sel: #eaf1ff;
+    --clien: #3b6fd6; --ppomppu: #e0742b; --damoang: #1f9d6b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111317; --panel: #1a1d22; --text: #e6e8eb; --sub: #8b929c; --line: #2a2e35;
+            --visited: #6b7280; --hover: #22262d; --accent: #6b9cff; --sel: #1f2a3d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line);
+           display: flex; gap: 10px; align-items: center; padding: 10px 16px; }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  #updated { color: var(--sub); font-size: 12px; white-space: nowrap; }
+  #q { flex: 1; min-width: 80px; max-width: 360px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px;
+       background: var(--bg); color: var(--text); font-size: 14px; }
+  button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
+           color: var(--text); cursor: pointer; font-size: 13px; white-space: nowrap; }
+  button:hover { background: var(--hover); }
+  .wrap { display: flex; max-width: 1200px; margin: 0 auto; gap: 16px; padding: 16px; align-items: flex-start; }
+  nav { width: 200px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+        padding: 8px; position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow: auto; }
+  .site-head { font-weight: 700; font-size: 13px; padding: 8px 8px 2px; }
+  .site-head.s-클리앙 { color: var(--clien); } .site-head.s-뽐뿌 { color: var(--ppomppu); } .site-head.s-다모앙 { color: var(--damoang); }
+  .b { display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px;
+       background: none; text-align: left; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; }
+  .b:hover { background: var(--hover); }
+  .b.on { background: var(--sel); font-weight: 600; }
+  .b .cnt { margin-left: auto; color: var(--sub); font-size: 12px; font-weight: 400; }
+  .b .new { margin-left: auto; background: #ef4444; color: #fff; border-radius: 9px; padding: 0 6px; font-size: 11px; font-weight: 600; }
+  .b.ext { color: var(--sub); }
+  .b .sp { display: none; }
+  .b .warn { color: #d97706; }
+  main { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .bhead { display: flex; align-items: baseline; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .bhead h2 { margin: 0; font-size: 16px; }
+  .bhead a { margin-left: auto; font-size: 12px; color: var(--sub); }
+  .row { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+  .row:hover { background: var(--hover); }
+  .tag { flex-shrink: 0; font-size: 12px; color: var(--sub); white-space: nowrap; }
+  .title { flex: 1; min-width: 0; color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title:visited { color: var(--visited); }
+  .title .cm { color: var(--accent); font-size: 12px; margin-left: 4px; }
+  .dot::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ef4444; margin-right: 6px; vertical-align: middle; }
+  .meta { flex-shrink: 0; color: var(--sub); font-size: 12px; white-space: nowrap; }
+  .meta .au { display: inline-block; max-width: 100px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; margin-right: 8px; }
+  .empty { padding: 40px; text-align: center; color: var(--sub); }
+  #more { display: block; width: 100%; border: 0; border-radius: 0; padding: 12px; }
+  @media (max-width: 760px) {
+    header h1, #updated { display: none; }
+    .wrap { display: block; padding: 0; }
+    nav { position: sticky; top: 53px; z-index: 4; width: auto; max-height: none; border-radius: 0; border-width: 0 0 1px;
+          display: flex; overflow-x: auto; gap: 4px; padding: 6px 8px; white-space: nowrap; }
+    .site-head { display: none; }
+    .b { width: auto; flex-shrink: 0; border: 1px solid var(--line); border-radius: 16px; padding: 4px 10px; font-size: 13px; }
+    .b .cnt { display: none; }
+    .b .sp { display: inline; color: var(--sub); font-weight: 400; }
+    main { border-radius: 0; border-width: 0; }
+    .row { flex-wrap: wrap; gap: 2px 8px; padding: 9px 12px; }
+    .tag { order: 1; } .meta { order: 2; margin-left: auto; }
+    .title { order: 3; flex-basis: 100%; white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>커뮤니티 모아보기</h1>
+  <input id="q" type="search" placeholder="제목 검색">
+  <span id="updated"></span>
+  <button id="reload" title="새 데이터 불러오기">새로고침</button>
+</header>
+<div class="wrap">
+  <nav id="nav"></nav>
+  <main><div id="head"></div><div id="list"></div><button id="more" hidden>더 보기</button></main>
+</div>
+<script>
+(() => {
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ALL = '__all';
+
+  let data = { boards: [], posts: [], status: {} };
+  let current = store.get('board', null);
+  let seen = store.get('seen', {});        // 게시판별 마지막으로 본 시각
+  let limit = 100;
+  const t = (p) => new Date(p.date || p.firstSeen).getTime();
+
+  function ago(iso) {
+    if (!iso) return '';
+    const s = (Date.now() - new Date(iso)) / 1000;
+    if (s < 60) return '방금';
+    if (s < 3600) return Math.floor(s / 60) + '분 전';
+    if (s < 86400) return Math.floor(s / 3600) + '시간 전';
+    const d = new Date(iso);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  }
+  const fresh = (p) => new Date(p.firstSeen || p.date).getTime();
+  const newCount = (id) => data.posts.filter((p) => p.board === id && seen[id] && fresh(p) > seen[id]).length;
+
+  function renderNav() {
+    const sites = [...new Set(data.boards.map((b) => b.site))];
+    let html = `<button class="b${current === ALL ? ' on' : ''}" data-id="${ALL}">전체 최신</button>`;
+    for (const site of sites) {
+      html += `<div class="site-head s-${esc(site)}">${esc(site)}</div>`;
+      for (const b of data.boards.filter((x) => x.site === site)) {
+        if (b.linkOnly) {
+          html += `<a class="b ext" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" title="자동 수집이 막혀 사이트로 이동">${esc(b.name)} ↗</a>`;
+          continue;
+        }
+        const st = data.status[b.id];
+        const warn = st && !st.ok ? `<span class="warn" title="수집 실패: ${esc(st.error)}">⚠</span>` : '';
+        const n = b.id === current ? 0 : newCount(b.id);
+        html += `<button class="b${b.id === current ? ' on' : ''}" data-id="${b.id}"><span class="sp">${esc(site)} </span>${esc(b.name)} ${warn}${n ? `<span class="new">${n}</span>` : ''}</button>`;
+      }
+    }
+    $('#nav').innerHTML = html;
+    $('#nav .on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  function renderList() {
+    const q = $('#q').value.trim().toLowerCase();
+    const bmap = Object.fromEntries(data.boards.map((b) => [b.id, b]));
+    const isAll = current === ALL;
+    const b = bmap[current];
+    $('#head').innerHTML = isAll
+      ? `<div class="bhead"><h2>전체 최신</h2></div>`
+      : `<div class="bhead"><h2>${esc(b?.site)} ${esc(b?.name)}</h2><a href="${esc(b?.url)}" target="_blank" rel="noopener noreferrer">원래 게시판 ↗</a></div>`;
+    const rows = data.posts
+      .filter((p) => (isAll ? !bmap[p.board]?.linkOnly : p.board === current) && (!q || p.title.toLowerCase().includes(q)))
+      .sort((a, b) => t(b) - t(a));
+    const since = seen[current] || 0;
+    $('#list').innerHTML = rows.length ? rows.slice(0, limit).map((p) => {
+      const bb = bmap[p.board] || {};
+      const tag = isAll ? `<span class="tag">${esc(bb.site)} ${esc(bb.name)}</span>` : (p.sub ? `<span class="tag">${esc(p.sub)}</span>` : '');
+      const isNew = since && fresh(p) > since;
+      return `<div class="row">${tag}
+        <a class="title${isNew ? ' dot' : ''}" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title)}${p.comments ? `<span class="cm">[${p.comments}]</span>` : ''}</a>
+        <span class="meta">${p.author ? `<span class="au">${esc(p.author)}</span>` : ''}${ago(p.date || p.firstSeen)}</span>
+      </div>`;
+    }).join('') : `<div class="empty">표시할 글이 없습니다.</div>`;
+    $('#more').hidden = rows.length <= limit;
+  }
+
+  function select(id) {
+    if (current && current !== id) { seen[current] = Date.now(); }
+    current = id;
+    store.set('board', id);
+    limit = 100;
+    renderNav(); renderList();
+    scrollTo(0, 0);
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+      data = await res.json();
+    } catch (e) {
+      $('#list').innerHTML = '<div class="empty">data.json을 불러오지 못했습니다.</div>';
+      return;
+    }
+    const valid = data.boards.filter((b) => !b.linkOnly).map((b) => b.id);
+    if (current !== ALL && !valid.includes(current)) current = valid[0];
+    for (const id of valid) if (!seen[id]) seen[id] = Date.now();
+    store.set('seen', seen);
+    $('#updated').textContent = '갱신 ' + ago(data.updatedAt);
+    $('#updated').title = new Date(data.updatedAt).toLocaleString('ko-KR');
+    renderNav(); renderList();
+  }
+
+  $('#nav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button.b');
+    if (btn) select(btn.dataset.id);
+  });
+  $('#q').addEventListener('input', () => { limit = 100; renderList(); });
+  $('#more').addEventListener('click', () => { limit += 100; renderList(); });
+  $('#reload').addEventListener('click', load);
+  addEventListener('beforeunload', () => { if (current) seen[current] = Date.now(); store.set('seen', seen); });
+  setInterval(load, 2 * 60 * 1000);
+  setInterval(() => data.updatedAt && ($('#updated').textContent = '갱신 ' + ago(data.updatedAt)), 30 * 1000);
+  load();
+})();
+</script>
+</body>
+</html>
